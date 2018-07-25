@@ -32,7 +32,12 @@ class Header extends React.Component {
     onHeaderDrop: PropTypes.func,
     draggableHeaderCell: PropTypes.func,
     getValidFilterValues: PropTypes.func,
-    cellMetaData: PropTypes.shape(cellMetaDataShape)
+    cellMetaData: PropTypes.shape(cellMetaDataShape),
+    showScrollbar: PropTypes.bool
+  };
+
+  static defaultProps = {
+    showScrollbar: true
   };
 
   state: {resizing: any} = {resizing: null};
@@ -60,8 +65,7 @@ class Header extends React.Component {
       let resizing = {
         columnMetrics: shallowCloneObject(state.columnMetrics)
       };
-      resizing.columnMetrics = ColumnMetrics.resizeColumn(
-          resizing.columnMetrics, pos, width);
+      resizing.columnMetrics = ColumnMetrics.resizeColumn(resizing.columnMetrics, pos, width, this.props.showScrollbar);
 
       // we don't want to influence scrollLeft while resizing
       if (resizing.columnMetrics.totalWidth < state.columnMetrics.totalWidth) {
@@ -93,7 +97,7 @@ class Header extends React.Component {
       if (row.rowType === 'filter') {
         rowHeight = '500px';
       }
-      let scrollbarSize = getScrollbarSize() > 0 ? getScrollbarSize() : 0;
+      let scrollbarSize = Math.max(getScrollbarSize(this.props.showScrollbar), 0);
       let updatedWidth = isNaN(this.props.totalWidth - scrollbarSize) ? this.props.totalWidth : this.props.totalWidth - scrollbarSize;
       let headerRowStyle = {
         position: 'absolute',
@@ -124,6 +128,7 @@ class Header extends React.Component {
         onSort={this.props.onSort}
         onScroll={this.props.onScroll}
         getValidFilterValues={this.props.getValidFilterValues}
+        showScrollbar={this.props.showScrollbar}
         />);
     });
     return headerRows;

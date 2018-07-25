@@ -43,7 +43,12 @@ class HeaderRow extends React.Component {
     onScroll: PropTypes.func,
     rowType: PropTypes.string,
     draggableHeaderCell: PropTypes.func,
-    onHeaderDrop: PropTypes.func
+    onHeaderDrop: PropTypes.func,
+    showScrollbar: PropTypes.bool
+  };
+
+  static defaultProps = {
+    showScrollbar: true
   };
 
   componentWillMount() {
@@ -167,7 +172,7 @@ class HeaderRow extends React.Component {
 
   render(): ?ReactElement {
     let cellsStyle = {
-      width: this.props.width ? (this.props.width + getScrollbarSize()) : '100%',
+      width: this.props.width ? (this.props.width + getScrollbarSize(this.props.showScrollbar)) : '100%',
       height: this.props.height,
       whiteSpace: 'nowrap',
       overflowX: 'hidden',

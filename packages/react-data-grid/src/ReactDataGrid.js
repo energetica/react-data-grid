@@ -124,7 +124,8 @@ class ReactDataGrid extends React.Component {
     selectAllRenderer: PropTypes.object,
     minColumnWidth: PropTypes.number,
     columnEquality: PropTypes.func,
-    onColumnResize: PropTypes.func
+    onColumnResize: PropTypes.func,
+    showScrollbar: PropTypes.bool
   };
 
   static defaultProps = {
@@ -147,7 +148,8 @@ class ReactDataGrid extends React.Component {
     enableCellAutoFocus: true,
     onBeforeEdit: () => {},
     minColumnWidth: 80,
-    columnEquality: ColumnMetrics.sameColumn
+    columnEquality: ColumnMetrics.sameColumn,
+    showScrollbar: true
   };
 
   constructor(props, context) {
@@ -188,10 +190,12 @@ class ReactDataGrid extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.columns) {
+      const metricWidth = (!!this.columnMetrics) ? this.columnMetrics.totalWidth : 0;
       if (!ColumnMetrics.sameColumns(this.props.columns, nextProps.columns, this.props.columnEquality) ||
-          nextProps.minWidth !== this.props.minWidth) {
+          nextProps.minWidth !== this.props.minWidth ||
+          this.getTotalWidth() !== metricWidth) {
         let columnMetrics = this.createColumnMetrics(nextProps);
-        this.setState({columnMetrics: columnMetrics});
+        this.setState({columnMetrics});
       }
     }
   }
@@ -217,7 +221,7 @@ class ReactDataGrid extends React.Component {
       totalWidth: totalWidth,
       minColumnWidth: metrics.minColumnWidth
     };
-    let updatedMetrics = ColumnMetrics.recalculate(currentMetrics);
+    let updatedMetrics = ColumnMetrics.recalculate(currentMetrics, this.props.showScrollbar);
     return updatedMetrics;
   };
 
@@ -254,7 +258,7 @@ class ReactDataGrid extends React.Component {
   };
 
   onColumnResize = (index: number, width: number) => {
-    let columnMetrics = ColumnMetrics.resizeColumn(this.state.columnMetrics, index, width);
+    let columnMetrics = ColumnMetrics.resizeColumn(this.state.columnMetrics, index, width, this.props.showScrollbar);
     this.setState({columnMetrics});
     if (this.props.onColumnResize) {
       this.props.onColumnResize(index, width);
@@ -1261,7 +1265,8 @@ class ReactDataGrid extends React.Component {
             rowScrollTimeout={this.props.rowScrollTimeout}
             scrollToRowIndex={this.props.scrollToRowIndex}
             contextMenu={this.props.contextMenu}
-            overScan={this.props.overScan} />
+            overScan={this.props.overScan}
+            showScrollbar={this.props.showScrollbar} />
           </div>
         </div>
       );

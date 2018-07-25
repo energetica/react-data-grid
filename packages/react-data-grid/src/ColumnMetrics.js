@@ -31,17 +31,25 @@ function setColumnWidths(columns, totalWidth) {
 
 function setDefferedColumnWidths(columns, unallocatedWidth, minColumnWidth) {
   let defferedColumns = columns.filter(c => !c.width);
+  let defferedColumnsRemaining = ColumnUtils.getSize(defferedColumns);
+  let remainingUnallocatedWidth = unallocatedWidth;
+
   return columns.map((column) => {
     if (!column.width && column.width !== 0) {
       if (unallocatedWidth <= 0) {
         column.width = minColumnWidth;
       } else {
-        let columnWidth = Math.floor(unallocatedWidth / (ColumnUtils.getSize(defferedColumns)));
-        if (columnWidth < minColumnWidth) {
-          column.width = minColumnWidth;
-        } else {
-          column.width = columnWidth;
+        let unallocatedWidthFraction = Math.floor(unallocatedWidth / (ColumnUtils.getSize(defferedColumns)));
+        let columnWidth = Math.max(unallocatedWidthFraction, minColumnWidth);
+
+        remainingUnallocatedWidth -= columnWidth;
+        defferedColumnsRemaining -= 1;
+
+        if (defferedColumnsRemaining === 0 && remainingUnallocatedWidth > 0) {
+          columnWidth += remainingUnallocatedWidth;
         }
+
+        column.width = columnWidth;
       }
     }
     return column;
@@ -61,15 +69,17 @@ function setColumnOffsets(columns) {
  * Update column metrics calculation.
  *
  * @param {ColumnMetricsType} metrics
+ * @param showScrollbar
  */
-function recalculate(metrics: ColumnMetricsType): ColumnMetricsType {
+function recalculate(metrics: ColumnMetricsType, showScrollbar: boolean): ColumnMetricsType {
     // compute width for columns which specify width
   let columns = setColumnWidths(metrics.columns, metrics.totalWidth);
 
   let unallocatedWidth = columns.filter(c => c.width).reduce((w, column) => {
     return w - column.width;
   }, metrics.totalWidth);
-  unallocatedWidth -= getScrollbarSize();
+
+  unallocatedWidth -= getScrollbarSize(showScrollbar);
 
   let width = columns.filter(c => c.width).reduce((w, column) => {
     return w + column.width;
@@ -93,10 +103,11 @@ function recalculate(metrics: ColumnMetricsType): ColumnMetricsType {
  * Update column metrics calculation by resizing a column.
  *
  * @param {ColumnMetricsType} metrics
- * @param {Column} column
+ * @param index
  * @param {number} width
+ * @param showScrollbar
  */
-function resizeColumn(metrics: ColumnMetricsType, index: number, width: number): ColumnMetricsType {
+function resizeColumn(metrics: ColumnMetricsType, index: number, width: number, showScrollbar: boolean): ColumnMetricsType {
   let column = ColumnUtils.getColumn(metrics.columns, index);
   let metricsClone = shallowCloneObject(metrics);
   metricsClone.columns = metrics.columns.slice(0);
@@ -106,7 +117,7 @@ function resizeColumn(metrics: ColumnMetricsType, index: number, width: number):
 
   metricsClone = ColumnUtils.spliceColumn(metricsClone, index, updatedColumn);
 
-  return recalculate(metricsClone);
+  return recalculate(metricsClone, showScrollbar);
 }
 
 function areColumnsImmutable(prevColumns: Array<Column>, nextColumns: Array<Column>) {
